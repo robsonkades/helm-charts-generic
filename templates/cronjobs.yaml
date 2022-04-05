@@ -1,0 +1,46 @@
+{{- if .Values.jobs.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "abdocs.name" . }}
+  labels: 
+    {{- include "abdocs.labels" . | nindent 4 }}
+spec: 
+  schedule: {{ .Values.jobs.schedule | quote }}
+  startingDeadlineSeconds:  {{ .Values.jobs.startingDeadline }}
+  concurrencyPolicy: {{ .Values.jobs.concurrencyPolicy }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels: {{- include "abdocs.labels" . | nindent 12 }}
+        spec:
+          serviceAccountName: {{ include "abdocs.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.container.podSecurityContext | nindent 12 }}
+          restartPolicy: {{ .Values.jobs.restartPolicy | default "Never" }}
+          {{- with .Values.image.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          containers:
+            - name: {{ include "abdocs.name" . }}
+              securityContext:
+                {{- toYaml .Values.jobs.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent"  }}
+              resources:
+                {{- toYaml .Values.jobs.resources | nindent 16 }}
+              {{- with .Values.jobs.command }}
+              command:
+              {{- range . }}
+                - {{ . | quote }}
+              {{- end }}
+              {{- end }}
+              {{- with .Values.jobs.args }}
+              args:
+              {{- range . }}
+                - {{ . | quote }}
+              {{- end }}
+              {{- end }}
+{{- end }}

@@ -1,0 +1,71 @@
+{{- if .Values.container.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "abdocs.name" . }}
+  labels:
+    {{- include "abdocs.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.container.autoscaling }}
+  {{- if not .Values.container.autoscaling.enabled }}
+  replicas: {{ .Values.container.replicaCount }}
+  {{- end }}
+  {{ else }}
+  replicas: {{ .Values.container.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "abdocs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.appConfig.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "abdocs.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "abdocs.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.container.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "abdocs.name" . }}
+          securityContext:
+            {{- toYaml .Values.container.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: http
+              containerPort: {{  .Values.container.port | default 80 }}
+              protocol: TCP
+          {{- if .Values.container.heathcheck }}
+          {{- if .Values.container.heathcheck.enable }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.container.livenessProbe | default "/" }}
+              port: http
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.container.readinessProbe | default "/" }}
+              port: http
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.container.resources | nindent 12 }}
+          {{- with .Values.container.command }}
+          command:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.container.args }}
+          args:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+{{- end }}

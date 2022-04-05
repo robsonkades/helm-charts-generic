@@ -1,0 +1,75 @@
+appConfig:
+  name: My Robot
+  annotations: 
+    type: build
+    name: robot
+    team: engineer
+
+container:
+  enabled: false
+  replicaCount: 0
+  securityContext: {}
+  podSecurityContext: {}
+  port: 80
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  heathcheck:
+    enable: true
+    livenessProbe: /
+    readinessProbe: /
+  type: NodePort
+  command:
+    - /etc/bin/bash
+  args:
+    - /etc/bin/bash
+  resources: 
+    requests:
+      memory: "100Mi"
+    limits:
+      memory: "200Mi"
+
+jobs:
+  enabled: false
+  schedule: '*/15 * * * *'
+  startingDeadline: 10
+  concurrencyPolicy: 'Forbid'
+  securityContext: {}
+  podSecurityContext: {}
+  resources: 
+    requests:
+      memory: "100Mi"
+    limits:
+      memory: "200Mi"
+  command:
+    - /etc/bin/bash
+  args:
+    - --set-password=!H4@rP14@12
+    - --set-user=root
+  
+image:
+  repository: nginx
+  pullPolicy: Always
+  imagePullSecrets: {}
+  tag: 1.0.0
+
+serviceAccount:
+  enabled: true
+  annotations: {}
+  name: build-robot
+
+env:
+  configMap:
+    - name: ''
+      value: ''
+  secret:
+    - name: ''
+      value: ''
+  shared:
+    - name: ''
+      valeu: ''
+
+

@@ -1,0 +1,17 @@
+{{- if .Values.container.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "abdocs.name" . }}
+  labels:
+    {{- include "abdocs.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.container.type }}
+  ports:
+    - port: {{ .Values.container.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "abdocs.selectorLabels" . | nindent 4 }}
+{{- end }}
