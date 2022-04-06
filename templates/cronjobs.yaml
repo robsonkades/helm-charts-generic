@@ -1,5 +1,5 @@
 {{- if .Values.jobs.enabled }}
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "abdocs.name" . }}
@@ -23,12 +23,29 @@ spec:
           imagePullSecrets:
             {{- toYaml . | nindent 8 }}
           {{- end }}
+          {{- if .Values.volume }}
+          {{- if .Values.volume.enable }}
+          volumes:
+            - name: {{ .Values.volume.name }}
+              persistentVolumeClaim:
+                claimName: {{ .Values.volume.claimName }}
+          {{- end }}
+          {{- end }}
           containers:
             - name: {{ include "abdocs.name" . }}
               securityContext:
                 {{- toYaml .Values.jobs.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent"  }}
+              {{- if .Values.volume }}
+              {{- if .Values.volume.enable }}
+              {{- if .Values.jobs.volume }}
+              volumeMounts:
+                - name: {{ .Values.volume.name }}
+                  mountPath: {{ .Values.jobs.volume }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
               resources:
                 {{- toYaml .Values.jobs.resources | nindent 16 }}
               {{- with .Values.jobs.command }}

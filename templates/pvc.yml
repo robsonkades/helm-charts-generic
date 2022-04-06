@@ -1,0 +1,14 @@
+{{- if .Values.volume.enable }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.claimName }}
+  labels:
+    {{- include "abdocs.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.volume.accessModes | nindent 4 }}
+  storageClassName: {{ .Values.volume.storageClassName | default "local-path" }}
+  resources: 
+    {{- toYaml .Values.volume.resources | nindent 4 }}
+{{- end }}

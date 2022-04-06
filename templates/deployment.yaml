@@ -32,15 +32,32 @@ spec:
       serviceAccountName: {{ include "abdocs.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.container.podSecurityContext | nindent 8 }}
+      {{- if .Values.volume }}
+      {{- if .Values.volume.enable }}
+      volumes:
+        - name: {{ .Values.volume.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.claimName }}
+      {{- end }}
+      {{- end }}
       containers:
         - name: {{ include "abdocs.name" . }}
           securityContext:
             {{- toYaml .Values.container.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.volume }}
+          {{- if .Values.volume.enable }}
+          {{- if .Values.container.volume }}
+          volumeMounts:
+            - name: {{ .Values.volume.name }}
+              mountPath: {{ .Values.container.volume }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
           ports:
             - name: http
-              containerPort: {{  .Values.container.port | default 80 }}
+              containerPort: {{ .Values.container.port | default 80 }}
               protocol: TCP
           {{- if .Values.container.heathcheck }}
           {{- if .Values.container.heathcheck.enable }}

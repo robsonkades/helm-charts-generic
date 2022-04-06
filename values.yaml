@@ -1,16 +1,17 @@
 appConfig:
-  name: My Robot
+  name: demo-app
   annotations: 
-    type: build
-    name: robot
+    type: app
+    name: demo
     team: engineer
 
 container:
   enabled: true
-  replicaCount: 0
+  replicaCount: 1
   securityContext: {}
   podSecurityContext: {}
   port: 80
+  volume: /data
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -18,51 +19,65 @@ container:
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: 80
   heathcheck:
-    enable: true
+    enable: false
     livenessProbe: /
     readinessProbe: /
   type: NodePort
-  command:
-    - /etc/bin/bash
-  args:
-    - /etc/bin/bash
+  # command:
+  #   - /etc/bin/bash
+  # args:
+  #   - /etc/bin/bash
   resources: 
     requests:
       memory: "100Mi"
     limits:
       memory: "200Mi"
 
+volume:
+  enable: true
+  name: demo
+  claimName: demo-claim
+  storageClassName: local-path
+  resources: 
+    requests:
+      storage: 2Gi
+  accessModes: 
+    - ReadWriteOnce
+
 jobs:
-  enabled: false
-  schedule: '*/15 * * * *'
+  enabled: true
+  schedule: "* * * * *"
   startingDeadline: 10
   concurrencyPolicy: 'Forbid'
   securityContext: {}
   podSecurityContext: {}
+  volume: /data
+  restartPolicy: OnFailure
   resources: 
     requests:
       memory: "100Mi"
     limits:
       memory: "200Mi"
   command:
-    - /etc/bin/bash
-  args:
-    - --set-password=!H4@rP14@12
-    - --set-user=root
-  
+    - /bin/sh
+    - -c
+    - date; echo Hello from the Kubernetes cluster
+  # args:
+  #   - /etc/bin/bash
+
 image:
   repository: nginx
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   imagePullSecrets: {}
-  tag: 1.0.0
+  tag: latest
 
 serviceAccount:
   enabled: true
   annotations: {}
-  name: build-robot
+  name: demo
 
 ingress:
-  enabled: true
+  enabled: false
   className: ""
   annotations:
     {}
